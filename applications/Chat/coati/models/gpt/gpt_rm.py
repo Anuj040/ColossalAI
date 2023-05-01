@@ -3,7 +3,7 @@ from typing import Optional
 import torch.nn as nn
 from transformers.models.gpt2.configuration_gpt2 import GPT2Config
 from transformers.models.gpt2.modeling_gpt2 import GPT2Model
-
+from transformers import AutoModel
 from ..base import RewardModel
 
 
@@ -26,7 +26,8 @@ class GPTRM(RewardModel):
                  lora_rank: int = 0,
                  lora_train_bias: str = 'none') -> None:
         if pretrained is not None:
-            model = GPT2Model.from_pretrained(pretrained)
+            model = AutoModel.from_pretrained(pretrained)
+            # model = GPT2Model.from_pretrained(pretrained)
         elif config is not None:
             model = GPT2Model(config)
         else:
@@ -34,6 +35,6 @@ class GPTRM(RewardModel):
         if checkpoint:
             model.gradient_checkpointing_enable()
 
-        value_head = nn.Linear(model.config.n_embd, 1)
-        value_head.weight.data.normal_(mean=0.0, std=1 / (model.config.n_embd + 1))
+        value_head = nn.Linear(model.config.hidden_size, 1)
+        value_head.weight.data.normal_(mean=0.0, std=1 / (model.config.hidden_size + 1))
         super().__init__(model, value_head, lora_rank, lora_train_bias)

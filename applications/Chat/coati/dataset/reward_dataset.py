@@ -52,8 +52,7 @@ class RmStaticDataset(Dataset):
             })
 
     def __len__(self):
-        length = len(self.chosen)
-        return length
+        return len(self.chosen)
 
     def __getitem__(self, idx):
         return self.chosen[idx]["input_ids"], self.chosen[idx]["attention_mask"], self.reject[idx][

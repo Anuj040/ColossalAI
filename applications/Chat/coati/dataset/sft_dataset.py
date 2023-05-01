@@ -32,12 +32,12 @@ logger = get_dist_logger()
 IGNORE_INDEX = -100
 PROMPT_DICT = {
     "prompt_input":
-        ("Below is an instruction that describes a task, paired with an input that provides further context. "
-         "Write a response that appropriately completes the request.\n\n"
-         "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:"),
-    "prompt_no_input": ("Below is an instruction that describes a task. "
-                        "Write a response that appropriately completes the request.\n\n"
-                        "### Instruction:\n{instruction}\n\n### Response:"),
+        ("以下はタスクを説明する指示と、さらなる文脈を提供する入力がペアになっています。"
+         "適切にリクエストを完了するレスポンスを書いてください。\n\n"
+         "### 指示:{instruction}\n\n### 入力:{input}\n\n### レスポンス:"),
+    "prompt_no_input": ("以下はタスクを説明する指示です。"
+                        "適切にリクエストを完了するレスポンスを書いてください。\n\n"
+                        "### 指示:{instruction}\n\n### レスポンス:"),
 }
 
 
@@ -69,8 +69,7 @@ class SFTDataset(Dataset):
             self.labels = copy.deepcopy(self.input_ids)
 
     def __len__(self):
-        length = len(self.prompts)
-        return length
+        return len(self.prompts)
 
     def __getitem__(self, idx):
         # dict(input_ids=self.input_ids[i], labels=self.labels[i])

@@ -75,7 +75,7 @@ class SFTTrainer(ABC):
         total_loss = 0
         # epoch_bar = tqdm(range(self.epochs), desc='Epochs', disable=not is_rank_0())
         step_bar = tqdm(range(len(self.train_dataloader) // self.accimulation_steps * self.epochs),
-                        desc=f'steps',
+                        desc='steps',
                         disable=not is_rank_0())
         for epoch in range(self.epochs):
 
@@ -111,11 +111,13 @@ class SFTTrainer(ABC):
                     self.optimizer.zero_grad()
                     self.scheduler.step()
                     wandb.log({
-                        "loss": total_loss / self.accimulation_steps,
+                        "loss": total_loss,
                         "lr": self.scheduler.get_last_lr()[0],
                         "epoch": epoch,
                         "batch_id": batch_id
                     })
+                    if dist.get_rank() == 0:
+                        logger.info(f'Train Epoch {epoch+1}/{self.epochs} loss {total_loss} batch_id {batch_id}')
                     total_loss = 0
                     step_bar.update()
 
@@ -147,7 +149,7 @@ class SFTTrainer(ABC):
 
                     loss_mean = loss_sum / num_seen
                     if dist.get_rank() == 0:
-                        logger.info(f'Eval Epoch {epoch}/{self.epochs} loss {loss_mean}')
+                        logger.info(f'Eval Epoch {epoch+1}/{self.epochs} loss {loss_mean}')
 
             # epoch_bar.update()
 

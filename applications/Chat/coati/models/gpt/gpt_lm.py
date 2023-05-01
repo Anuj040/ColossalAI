@@ -2,6 +2,7 @@ from typing import Optional
 
 from transformers.models.gpt2.configuration_gpt2 import GPT2Config
 from transformers.models.gpt2.modeling_gpt2 import GPT2LMHeadModel
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 from ..base import LM
 
@@ -25,7 +26,8 @@ class GPTLM(LM):
                  lora_rank: int = 0,
                  lora_train_bias: str = 'none') -> None:
         if pretrained is not None:
-            model = GPT2LMHeadModel.from_pretrained(pretrained)
+            model = AutoModelForCausalLM.from_pretrained(pretrained)
+            # model = GPT2LMHeadModel.from_pretrained(pretrained)
         elif config is not None:
             model = GPT2LMHeadModel(config)
         else:

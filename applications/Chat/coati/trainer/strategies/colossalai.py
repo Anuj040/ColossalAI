@@ -155,9 +155,7 @@ class ColossalAIStrategy(DDPStrategy):
     @staticmethod
     def _unwrap_actor(actor: Actor) -> nn.Module:
         model: Union[nn.Module, ZeroDDP] = Strategy._unwrap_actor(actor)
-        if isinstance(model, ZeroDDP):
-            return model.module
-        return model
+        return model.module if isinstance(model, ZeroDDP) else model
 
     def _unwrap_model(self, model: Union[nn.Module, ZeroDDP]) -> nn.Module:
         if isinstance(model, ZeroDDP) and self.stage == 3:
@@ -184,10 +182,14 @@ class ColossalAIStrategy(DDPStrategy):
                 module.merge_weights = True
                 module.eval()
         if isinstance(unwrapped_model, RewardModel):
-            state_dict = unwrapped_model.state_dict()
-            if only_rank0 and dist.get_rank() != 0:
-                return
-            torch.save(state_dict, path)
+            unwrapped_model = unwrapped_model.model
+        logger.info(f'Saving model to {path}', ranks=[0])
+        unwrapped_model.save_pretrained(path)
+        logger.info(f'Model saved to {path} Successfully', ranks=[0])
+        if tokenizer is not None:
+            logger.info(f'Saving tokenizer to {path}', ranks=[0])
+            tokenizer.save_pretrained(path)
+            logger.info(f'Tokenizer saved to {path} Successfully', ranks=[0])
         else:
             try:
                 if isinstance(unwrapped_model, LM):
@@ -208,5 +210,5 @@ class ColossalAIStrategy(DDPStrategy):
     def save_optimizer(self, optimizer: Optimizer, path: str, only_rank0: bool = False) -> None:
         if only_rank0:
             raise RuntimeError(
-                f'Optimizer states are sharded when using ColossalAIStrategy. Only rank0 is not supported.')
+                'Optimizer states are sharded when using ColossalAIStrategy. Only rank0 is not supported.')
         torch.save(optimizer.state_dict(), path)

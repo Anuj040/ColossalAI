@@ -26,5 +26,4 @@ class LM(Actor):
         """
         output = self.model(sequences, attention_mask=attention_mask)
         logits = output['logits']
-        log_probs = F.log_softmax(logits, dim=-1)
-        return log_probs
+        return F.log_softmax(logits, dim=-1)

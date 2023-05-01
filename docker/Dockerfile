@@ -17,10 +17,14 @@ RUN git clone https://github.com/NVIDIA/apex && \
 # install colossalai
 RUN git clone https://github.com/hpcaitech/ColossalAI.git \
     && cd ./ColossalAI \
+    && git checkout e6a132a \
     && CUDA_EXT=1 pip install -v --no-cache-dir .
 
-# install titans
-RUN pip install --no-cache-dir titans
+# Python packages
+COPY applications/Chat/requirements*.txt .
+
+# install titans & other dependencies
+RUN pip install --no-cache-dir titans && pip install -r requirements.txt && pip install -r requirements-test.txt && pip cache purge
 
 # install tensornvme
 RUN conda install cmake && \
@@ -28,3 +32,11 @@ RUN conda install cmake && \
     cd TensorNVMe && \
     pip install -r requirements.txt && \
     pip install -v --no-cache-dir .
+
+# Install system packages 
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    nano tmux htop iotop iftop && \
+    apt-get clean
+
+WORKDIR /rlhf
