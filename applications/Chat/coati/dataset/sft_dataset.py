@@ -65,11 +65,11 @@ class SFTDataset(Dataset):
                                      return_tensors="pt")
 
             # self.prompts.append(prompt_token)s
-            self.input_ids.append(prompt_token)
+            self.input_ids.append(prompt_token['input_ids'][0])
             self.labels = copy.deepcopy(self.input_ids)
 
     def __len__(self):
-        return len(self.prompts)
+        return len(self.input_ids)
 
     def __getitem__(self, idx):
         # dict(input_ids=self.input_ids[i], labels=self.labels[i])

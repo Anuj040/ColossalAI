@@ -12,3 +12,5 @@ sse_starlette
 wandb
 sentencepiece
 gpustat
+decorator
+accelerate

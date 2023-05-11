@@ -5,7 +5,6 @@ import loralib as lora
 import torch
 from coati.dataset import HhRlhfDataset, RmStaticDataset
 from coati.models import LogExpLoss, LogSigLoss
-from coati.models.base import RewardModel
 from coati.models.bloom import BLOOMRM
 from coati.models.deberta import DebertaRM
 from coati.models.gpt import GPTRM
@@ -17,8 +16,7 @@ from coati.trainer.strategies import ColossalAIStrategy, DDPStrategy, NaiveStrat
 from coati.utils import prepare_llama_tokenizer_and_embedding
 from datasets import load_dataset
 from torch.optim import Adam
-from transformers import AutoTokenizer, BloomTokenizerFast, DebertaV2Tokenizer, LlamaTokenizer, RobertaTokenizer
-from transformers.models.gpt2.tokenization_gpt2 import GPT2Tokenizer
+from transformers import AutoTokenizer, BloomTokenizerFast, DebertaV2Tokenizer, LlamaTokenizer, RobertaTokenizer, GPTNeoXJapaneseTokenizer
 
 from colossalai.logging import get_dist_logger
 from colossalai.nn.optimizer import HybridAdam
@@ -66,7 +64,7 @@ def train(args):
     if args.model == 'gpt2':
         # tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
         # tokenizer.pad_token = tokenizer.eos_token
-        tokenizer = AutoTokenizer.from_pretrained(args.pretrain)
+        tokenizer = GPTNeoXJapaneseTokenizer.from_pretrained(args.pretrain)
     elif args.model == 'bloom':
         tokenizer = BloomTokenizerFast.from_pretrained('bigscience/bloom-560m')
     elif args.model == 'opt':
@@ -118,8 +116,8 @@ def train(args):
         data = load_dataset(args.dataset)
 
     if args.test:
-        train_data = data['train'].select(range(100))
-        eval_data = data['test'].select(range(100))
+        train_data = data['train'].select(range(10))
+        eval_data = data['test'].select(range(10))
     else:
         train_data = data['train']
         eval_data = data['test']
@@ -153,7 +151,7 @@ def train(args):
     # save optimizer checkpoint on all ranks
     if args.need_optim_ckpt:
         strategy.save_optimizer(trainer.optimizer,
-                                os.path.join(args.save_path,'rm_optim_checkpoint_%d.pt' % (torch.cuda.current_device())),
+                                os.path.join(args.save_path,f'rm_optim_checkpoint_{torch.cuda.current_device()}.pt'),
                                 only_rank0=False)
 
 
@@ -177,7 +175,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_epochs', type=int, default=10)
     parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--max_len', type=int, default=512)
-    parser.add_argument('--lora_rank', type=int, default=0, help="low-rank adaptation matrices rank")
+    parser.add_argument('--lora_rank', type=int, default=1, help="low-rank adaptation matrices rank")
     parser.add_argument('--loss_fn', type=str, default='log_exp', choices=['log_sig', 'log_exp'])
     parser.add_argument('--log_interval', type=int, default=100, help="how many steps to log")
     parser.add_argument('--test', type=bool, default=False)

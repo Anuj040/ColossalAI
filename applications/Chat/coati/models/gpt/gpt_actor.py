@@ -2,8 +2,10 @@ from typing import Optional
 
 from transformers.models.gpt2.configuration_gpt2 import GPT2Config
 from transformers.models.gpt2.modeling_gpt2 import GPT2LMHeadModel
-from transformers import AutoModelForCausalLM
+from transformers import GPTNeoXJapaneseConfig, GPTNeoXJapaneseForCausalLM
 from ..base import Actor
+import torch.distributed as dist
+import torch
 
 
 class GPTActor(Actor):
@@ -23,10 +25,22 @@ class GPTActor(Actor):
                  config: Optional[GPT2Config] = None,
                  checkpoint: bool = False,
                  lora_rank: int = 0,
-                 lora_train_bias: str = 'none') -> None:
+                 lora_train_bias: str = 'none',
+                 state_dict:dict = None,
+                 shard_init:bool = False) -> None:
         if pretrained is not None:
-            model = AutoModelForCausalLM.from_pretrained(pretrained)
-            # model = GPT2LMHeadModel.from_pretrained(pretrained)
+            model = GPTNeoXJapaneseForCausalLM(GPTNeoXJapaneseConfig.from_pretrained(pretrained))
+            if state_dict is None: 
+                model = GPTNeoXJapaneseForCausalLM.from_pretrained(pretrained)
+                # model = GPT2LMHeadModel.from_pretrained(pretrained)
+            elif shard_init:
+                for n, p in model.named_parameters():
+                    x = state_dict[n]
+                    x = x.chunk(torch.cuda.device_count(), dim=-1)
+                    x = x[dist.get_rank()]
+                    p.data.copy_(x)
+            else:
+                model.load_state_dict(state_dict)
         elif config is not None:
             model = GPT2LMHeadModel(config)
         else:

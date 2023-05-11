@@ -1,11 +1,9 @@
 import argparse
 import os
 
-import loralib as lora
 import torch
 import torch.distributed as dist
 from coati.dataset import DataCollatorForSupervisedDataset, SFTDataset, SupervisedDataset
-from coati.models.base import RewardModel
 from coati.models.bloom import BLOOMLM
 from coati.models.gpt import GPTLM
 from coati.models.llama import LlamaLM
@@ -17,8 +15,7 @@ from datasets import load_dataset
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
-from transformers import AutoTokenizer, BloomTokenizerFast
-from transformers.models.gpt2.tokenization_gpt2 import GPT2Tokenizer
+from transformers import AutoTokenizer, BloomTokenizerFast, GPTNeoXJapaneseTokenizer
 
 from colossalai.logging import get_dist_logger
 from colossalai.nn.optimizer import HybridAdam
@@ -58,7 +55,7 @@ def train(args):
     if args.model == 'gpt2':
         # tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
         # tokenizer.pad_token = tokenizer.eos_token
-        tokenizer = AutoTokenizer.from_pretrained(args.pretrain)
+        tokenizer = GPTNeoXJapaneseTokenizer.from_pretrained(args.pretrain)
     elif args.model == 'bloom':
         tokenizer = BloomTokenizerFast.from_pretrained(args.pretrain)
         tokenizer.pad_token = tokenizer.eos_token
@@ -112,7 +109,7 @@ def train(args):
                                           max_datasets_size=args.max_datasets_size,
                                           max_length=max_len)
         eval_dataset = SupervisedDataset(tokenizer=tokenizer,
-                                          data_path="alpaca_data_gpt4_japanese.json",
+                                          data_path="data/alpaca_data_gpt4_japanese.json",
                                           max_datasets_size=args.max_datasets_size,
                                           max_length=max_len)
         data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
@@ -178,11 +175,11 @@ if __name__ == '__main__':
                         default='colossalai_zero2_cpu')
     parser.add_argument('--model', choices=['gpt2', 'bloom', 'opt', 'llama'], default='gpt2')
     parser.add_argument('--pretrain', type=str, default="abeja/gpt-neox-japanese-6.7b")
-    parser.add_argument('--dataset', type=str, default="databricks-dolly-15k-ja.json")
+    parser.add_argument('--dataset', type=str, default="data/dolly_mkqa.json")
     parser.add_argument('--max_datasets_size', type=int, default=None)
-    parser.add_argument('--save_path', type=str, default='model_sft_5')
+    parser.add_argument('--save_path', type=str, default='trained_models/model_sft_7')
     parser.add_argument('--need_optim_ckpt', type=bool, default=True)
-    parser.add_argument('--max_epochs', type=int, default=16)
+    parser.add_argument('--max_epochs', type=int, default=20)
     parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--max_len', type=int, default=512)
     parser.add_argument('--lora_rank', type=int, default=0, help="low-rank adaptation matrices rank")

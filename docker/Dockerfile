@@ -14,12 +14,6 @@ RUN git clone https://github.com/NVIDIA/apex && \
     pip install packaging && \
     pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" --global-option="--fast_layer_norm" ./
 
-# install colossalai
-RUN git clone https://github.com/hpcaitech/ColossalAI.git \
-    && cd ./ColossalAI \
-    && git checkout e6a132a \
-    && CUDA_EXT=1 pip install -v --no-cache-dir .
-
 # Python packages
 COPY applications/Chat/requirements*.txt .
 
@@ -39,4 +33,9 @@ RUN apt-get update -y && \
     nano tmux htop iotop iftop && \
     apt-get clean
 
+# install colossalai
+RUN git clone https://github.com/hpcaitech/ColossalAI.git \
+    && cd ./ColossalAI \
+    && CUDA_EXT=1 pip install -v --no-cache-dir .
+    
 WORKDIR /rlhf

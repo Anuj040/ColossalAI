@@ -1,6 +1,23 @@
+import torch.nn as nn
+
 from .actor import Actor
 from .critic import Critic
 from .lm import LM
 from .reward_model import RewardModel
 
-__all__ = ['Actor', 'Critic', 'RewardModel', 'LM']
+
+def get_base_model(model: nn.Module) -> nn.Module:
+    """Get the base model of our wrapper classes.
+    For Actor, it's base model is ``actor.model`` and it's usually a ``transformers.PreTrainedModel``.
+    For Critic and RewardModel, it's base model is itself.
+
+    Args:
+        model (nn.Module): model to get base model from
+
+    Returns:
+        nn.Module: the base model
+    """
+    return model.get_base_model() if isinstance(model, Actor) else model
+
+
+__all__ = ['Actor', 'Critic', 'RewardModel', 'get_base_model', 'LM']

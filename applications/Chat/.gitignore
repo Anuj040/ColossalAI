@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+core
 
 # C extensions
 *.so
@@ -144,3 +145,9 @@ docs/.build
 
 # wandb log
 example/wandb/
+wandb
+
+# others
+data
+tmp
+trained_models

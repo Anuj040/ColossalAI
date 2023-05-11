@@ -3,9 +3,10 @@ from typing import Optional
 import torch.nn as nn
 from transformers.models.gpt2.configuration_gpt2 import GPT2Config
 from transformers.models.gpt2.modeling_gpt2 import GPT2Model
-from transformers import AutoModel
+from transformers import GPTNeoXJapaneseConfig, GPTNeoXJapaneseModel
 from ..base import Critic
-
+import torch.distributed as dist
+import torch
 
 class GPTCritic(Critic):
     """
@@ -25,10 +26,22 @@ class GPTCritic(Critic):
                  checkpoint: bool = False,
                  lora_rank: int = 0,
                  lora_train_bias: str = 'none',
+                 state_dict:dict=None,
+                 shard_init:bool = False,
                  **kwargs) -> None:
         if pretrained is not None:
-            model = AutoModel.from_pretrained(pretrained)
-            # model = GPT2Model.from_pretrained(pretrained)
+            model = GPTNeoXJapaneseModel(GPTNeoXJapaneseConfig.from_pretrained(pretrained))
+            if state_dict is None: 
+                model = GPTNeoXJapaneseModel.from_pretrained(pretrained)
+                # model = GPT2Model.from_pretrained(pretrained)
+            elif shard_init:
+                for n, p in model.named_parameters():
+                    x = state_dict[n]
+                    x = x.chunk(torch.cuda.device_count(), dim=-1)
+                    x = x[dist.get_rank()]
+                    p.data.copy_(x)
+            else:
+                model.load_state_dict(state_dict)
         elif config is not None:
             model = GPT2Model(config)
         else:
