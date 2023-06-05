@@ -131,11 +131,13 @@ class SupervisedDataset(Dataset):
 
         logger.info("Formatting inputs...")
         prompt_input, prompt_no_input = PROMPT_DICT["prompt_input"], PROMPT_DICT["prompt_no_input"]
-        sources = [
-            prompt_input.format_map(example) if example.get("input", "") != "" else prompt_no_input.format_map(example)
-            for example in list_data_dict
-        ]
-        targets = [f"{example['output']}{tokenizer.eos_token}" for example in list_data_dict]
+        sources, targets = [], []
+        for example in list_data_dict:
+            try:
+                sources.append(prompt_input.format_map(example) if example.get("input", "") != "" else prompt_no_input.format_map(example))
+                targets.append(f"{example['output']}{tokenizer.eos_token}")
+            except Exception:
+                pass
 
         logger.info("Tokenizing inputs... This may take some time...")
         data_dict = preprocess(sources, targets, tokenizer, max_length)
